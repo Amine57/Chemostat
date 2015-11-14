@@ -61,21 +61,21 @@ B[0] = max(0, B[0])
 
 Bt = []
 St = []
-# itérations
+# itérations avec vectorisation dans la premiere boucle
 for k in range(0,Nob): 
-    for j in range (1,Ntk): 
-        mu=mu_m * S[j-1]/(ks+S[j-1]) # mu: taux de croissance
-        # les équations differrentielles stochastiques du Chemostat
-        B[j] = max(0 , B[j-1]+(mu-D)*B[j-1]*dt+c1*math.sqrt(B[j-1])*math.sqrt(dt)* np.random.normal())
-        S[j] = max(0 , S[j-1]+((-cs*mu*B[j-1])+(D*(Sin-S[j-1])))*dt+c2*math.sqrt(S[j-1])*math.sqrt(dt)*np.random.normal() )
+    mu=mu_m * S[0:Ntk-1]/(ks+S[0:Ntk-1]) # mu: taux de croissance
+    # Calcul des états
+    B[1:] = np.maximum(np.zeros(Ntk-1), B[0:Ntk-1]+(mu[Ntk-2]-D)*B[0:Ntk-1]*dt+c1*np.sqrt(B[0:Ntk-1])*np.sqrt(dt)* np.random.normal(0,1,Ntk-1))
+    S[1:] = np.maximum(np.zeros(Ntk-1) , S[0:Ntk-1]+((-cs*mu[Ntk-2]*B[0:Ntk-1])+(D*(Sin-S[0:Ntk-1])))*dt+c2*np.sqrt(S[0:Ntk-1])*np.sqrt(dt)*np.random.normal(0,1,Ntk-1) )
+    
     Bt = np.concatenate([Bt, B])
     St = np.concatenate([St, S])
 
-    B[0] = max(0 , B[j]+(mu-D)*B[j]*dt+c1*math.sqrt(B[j])*math.sqrt(dt)*np.random.normal())
-    S[0] = max(0 , S[j]+((-cs*mu*B[j])+(D*(Sin-S[j])))*dt+c2*math.sqrt(S[j])*math.sqrt(dt)*np.random.normal())
+    B[0] = max(0 , B[Ntk-1]+(mu[Ntk-2]-D)*B[Ntk-1]*dt+c1*np.sqrt(B[Ntk-1])*np.sqrt(dt)*np.random.normal())
+    S[0] = max(0 , S[Ntk-1]+((-cs*mu[Ntk-2]*B[Ntk-1])+(D*(Sin-S[Ntk-1])))*dt+c2*np.sqrt(S[Ntk-1])*np.sqrt(dt)*np.random.normal())
     
     # l'équation de sortie
-    y[k] = S[j]+sigma*S[j]*np.random.normal();
+    y[k] = S[Ntk-1]+sigma*S[Ntk-1]*np.random.normal();
 
 
 # tracer les resultats
