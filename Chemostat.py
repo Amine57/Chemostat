@@ -4,7 +4,6 @@ Created on Thu Nov 12 01:07:54 2015
 
 @author: amine
 
-
 =========================================================================
 Simulation du modèle du Chemostat
 =========================================================================
@@ -22,9 +21,7 @@ d'Euler Maruyama. La Sortie de cette fonction est un vecteur
 d'observations Y celculées à partir de l'equation de sortie de ce système
 =========================================================================
 """
-from __future__ import print_function
 import numpy as np
-import math 
 import matplotlib.pyplot as plt
 
 T = 1000                 # T: temps total de simulation
@@ -39,37 +36,31 @@ Sin=100                  # Sin: concentration de la biomasse à l'entrée
 c1=0.03                  # ci: écarts-types des Bruits
 c2=0.03                  # ci: écarts-types des Bruits
 sigma=0.2                # sigma: écart-type du bruit d'observation
-"""
-code Matlab : à convertir en Python !!
-% tirage des nombres aléatoires:
-% dw1=randn(N,1);
-% dw2=randn(N,1);
-% v=randn(N,1);
-"""
+
+# Fermeture de toute les figures
+plt.close('all')
 
 # allocation espace memoire
 B = np.zeros(Ntk)
 S = np.zeros(Ntk)
 y = np.zeros(Nob)
 
-
 # initialisation
-S[0] = np.random.normal(2,2)
-B[0] = np.random.normal(2,2)
-S[0] = max(0, S[0])
-B[0] = max(0, B[0])
+S[0] = max(0, np.random.normal(2,2))
+B[0] = max(0, np.random.normal(2,2))
 
-Bt = []
-St = []
+Bt = np.empty(Nob*Ntk)
+St = np.empty(Nob*Ntk)
 # itérations avec vectorisation dans la premiere boucle
 for k in range(0,Nob): 
-    mu=mu_m * S[0:Ntk-1]/(ks+S[0:Ntk-1]) # mu: taux de croissance
-    # Calcul des états
-    B[1:] = np.maximum(np.zeros(Ntk-1), B[0:Ntk-1]+(mu[Ntk-2]-D)*B[0:Ntk-1]*dt+c1*np.sqrt(B[0:Ntk-1])*np.sqrt(dt)* np.random.normal(0,1,Ntk-1))
-    S[1:] = np.maximum(np.zeros(Ntk-1) , S[0:Ntk-1]+((-cs*mu[Ntk-2]*B[0:Ntk-1])+(D*(Sin-S[0:Ntk-1])))*dt+c2*np.sqrt(S[0:Ntk-1])*np.sqrt(dt)*np.random.normal(0,1,Ntk-1) )
-    
-    Bt = np.concatenate([Bt, B])
-    St = np.concatenate([St, S])
+    for j in range (1,Ntk): 
+        mu=mu_m * S[j-1]/(ks+S[j-1]) # mu: taux de croissance
+        # les équations differrentielles stochastiques du Chemostat
+        B[j] = max(0 , B[j-1]+(mu-D)*B[j-1]*dt+c1*np.sqrt(B[j-1])*np.sqrt(dt)* np.random.normal())
+        S[j] = max(0 , S[j-1]+((-cs*mu*B[j-1])+(D*(Sin-S[j-1])))*dt+c2*np.sqrt(S[j-1])*np.sqrt(dt)*np.random.normal() )
+      
+    Bt[k*Ntk : (k+1)*Ntk] = B
+    St[k*Ntk : (k+1)*Ntk] = S
 
     B[0] = max(0 , B[Ntk-1]+(mu[Ntk-2]-D)*B[Ntk-1]*dt+c1*np.sqrt(B[Ntk-1])*np.sqrt(dt)*np.random.normal())
     S[0] = max(0 , S[Ntk-1]+((-cs*mu[Ntk-2]*B[Ntk-1])+(D*(Sin-S[Ntk-1])))*dt+c2*np.sqrt(S[Ntk-1])*np.sqrt(dt)*np.random.normal())
@@ -77,14 +68,12 @@ for k in range(0,Nob):
     # l'équation de sortie
     y[k] = S[Ntk-1]+sigma*S[Ntk-1]*np.random.normal();
 
-
 # tracer les resultats
 nbElements = (float(T-dt))/(10*Ntk*dt)
 instants = np.linspace(0,T,nbElements+1)
 
 bPlot = Bt[0:(Ntk*Nob):(10*Ntk)]
 sPlot = St[0:(Ntk*Nob):(10*Ntk)]
-
 
 fig1 = plt.figure()
 plt.plot(instants,bPlot,'b')
